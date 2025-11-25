@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Simple Chat UI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 500px;
+            margin-top: 40px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px #aaa;
+            padding: 20px;
+        }
+
+        #messages {
+            height: 350px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 6px;
+            background: #fafafa;
+            margin-bottom: 10px;
+        }
+
+        .bubble {
+            padding: 8px 12px;
+            margin: 6px 0;
+            border-radius: 10px;
+            display: inline-block;
+            max-width: 90%;
+        }
+
+        .user {
+            background: #d1e7ff;
+            align-self: flex-end;
+        }
+
+        .assistant {
+            background: #e7ffe7;
+            align-self: flex-start;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        #inputText {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        #sendBtn {
+            padding: 10px 16px;
+            font-size: 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        #sendBtn:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Chat with Your Model</h2>
+        <div id="messages"></div>
+
+        <div class="input-row">
+            <input id="inputText" placeholder="Type your message..." />
+            <button id="sendBtn">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const messagesDiv = document.getElementById("messages");
+        const inputField = document.getElementById("inputText");
+        const sendBtn = document.getElementById("sendBtn");
+
+        let userId = "user-" + Math.random().toString(36).substring(2, 8);
+
+        function addMessage(text, sender) {
+            const bubble = document.createElement("div");
+            bubble.classList.add("bubble", sender);
+            bubble.textContent = text;
+
+            const line = document.createElement("div");
+            line.style.display = "flex";
+            line.style.justifyContent =
+                sender === "user" ? "flex-end" : "flex-start";
+            line.appendChild(bubble);
+
+            messagesDiv.appendChild(line);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const text = inputField.value.trim();
+            if (!text) return;
+
+            addMessage(text, "user");
+            inputField.value = "";
+
+            const response = await fetch("/chat", {    // <-- RELATIVE PATH
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    user_id: userId,
+                    message: text,
+                }),
+            });
+
+            const data = await response.json();
+            addMessage(data.reply, "assistant");
+        }
+
+        sendBtn.onclick = sendMessage;
+
+        inputField.addEventListener("keypress", function (e) {
+            if (e.key === "Enter") sendMessage();
+        });
+    </script>
+
+
+</body>
+
+</html>

@@ -1,6 +1,8 @@
 from openai import OpenAI
 import gradio as gr
 from utility import cleanup_thinking
+from PIL import Image 
+
 
 MAX_TURNS = 6
 chat_history = []
@@ -36,7 +38,7 @@ def chat_handler(message, history):
 	messages = build_prompt(system_prompt, message)
 
 	stream = client.chat.completions.create(
-		model="Qwen/Qwen3-0.6B",
+		model="Qwen/Qwen2-VL-2B-Instruct", # replace this later by get_model() method
 		messages=messages,
 		stream=True,)
 
@@ -60,6 +62,7 @@ def build_ui():
 		fn = chat_handler,
 		title = "Simple Chat UI",
 		description = "Streaming Chat using OpenAI-compatible API",
+		multimodal=True
 	)
 
 	demo_app.launch()

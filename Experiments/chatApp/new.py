@@ -1,53 +1,70 @@
 from openai import OpenAI
 import gradio as gr
+from utility import cleanup_thinking
 
 MAX_TURNS = 6
-def build_prompt(system_msg, user_msg, assistant_msg):
+chat_history = []
+
+client = OpenAI(
+	base_url ="https://fatima-nonhyperbolical-parallel.ngrok-free.dev/v1",
+	api_key="dummy"
+	)
+
+def build_prompt(system_msg, user_msg):
 	global chat_history
-
 	if not chat_history:
-        chat_history.append({
-            "role": "system",
-            "content": system_msg
-        })
-    else:
-        chat_history[0] = {
-            "role": "system",
-            "content": system_msg
-        }
-        
+		chat_history.append({"role": "system", "content": system_msg })
+	
 	chat_history.append({"role":"user", "content":user_msg})
-	chat_history.append({"role":"assistant","content":assistant_msg})
 
+	# Keep only last N Turns
 	system_entry = chat_history[0]
-    recent = chat_history[-(MAX_TURNS * 2):]
+	turns = chat_history[1:]
 
-    chat_history[:] = [system_entry] + recent
+	trimmed = turns[-(MAX_TURNS * 2):]
 
-    return chat_history
+	chat_history[:] = [system_entry] + trimmed
+
+	print(chat_history)
+
+	return chat_history
 
 
-def get_system_prompt(input):
-	"""Define later"""
-	return input
+def chat_handler(message, history):
+	global chat_history
+	system_prompt = "You are a helpful assistant."
+	messages = build_prompt(system_prompt, message)
 
-def build_query(system_prompt, input_msg, history) -> str:
-	message = system_prompt + input_msg + ". Earlier context: " + history
-	return message
+	stream = client.chat.completions.create(
+		model="Qwen/Qwen3-0.6B",
+		messages=messages,
+		stream=True,)
 
-def get_response():
-	client = OpenAI(
-		base_url = "https://deplorably-athonite-loreta.ngrok-free.dev/v1",
-		api_key = "dummy"
-		)
+	partial = ""
 
-	response = client.chat.completions.create(
-		model = "Qwen/Qwen3-0.6B",
-		messages=[{"role": "user", "content": build_query()}],
-		stream=True,
-		)
-
-	for chunk in response:
+	for chunk in stream:
 		delta = chunk.choices[0].delta
 		if delta and delta.content:
-			print(delta.content, end="", flush=True)
+			partial += delta.content
+			yield partial
+
+	cleaned = cleanup_thinking(partial)
+
+	chat_history.append({"role":"assistant", "content": cleaned})
+
+
+
+def build_ui():
+
+	demo_app = gr.ChatInterface(
+		fn = chat_handler,
+		title = "Simple Chat UI",
+		description = "Streaming Chat using OpenAI-compatible API",
+	)
+
+	demo_app.launch()
+
+
+if __name__ == "__main__":
+	build_ui()
+

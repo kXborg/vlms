@@ -205,3 +205,23 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Model weights
+*.gguf
+*.ggml
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.hdf5
+*.pb
+*.tflite
+*.onnx
+*.mlmodel
+*.mlpackage
+*.mar
+*.params
+*.weight
+*.wt
